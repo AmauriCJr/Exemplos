@@ -1,6 +1,6 @@
 void atraso(volatile unsigned int x)
 {
-  TACR0 = 1000-1;
+  TACCR0 = 1000-1;
   TACTL |= TACLR;
   TACTL = TASSEL_2 + ID_0 + MC_1;
   while(x>0)
