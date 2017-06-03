@@ -1,4 +1,5 @@
-#include <msp430g2553.h>
+#include "msp430g2553.h"
+unsigned int ValorRecebido=0;
 
 void atraso(volatile unsigned int x)
 {
@@ -14,70 +15,79 @@ void atraso(volatile unsigned int x)
   TACTL = MC_0;
 }
 
-int regrade3(unsigned int x)
+int regrade3cal(unsigned int x, unsigned int c)
 {
   int pwm;
-  pwm = (x*17/1023) + 5;
-  
+  pwm = (x*17/c) + 5;
   
   return pwm;
 }
 
-void main(void)
-{
-	{
-                unsigned int ValorRecebido;
-                int ValorAtraso;
-		WDTCTL = WDTPW + WDTHOLD;		
-		BCSCTL2 &= ~(DIVS_3);	
-                ADC10CTL1 = INCH_5 + ADC10DIV_3 ;         
-                ADC10CTL0 = SREF_0 + ADC10SHT_3 + ADC10ON; 
-                ADC10AE0 |= BIT5;                     
-		P1SEL |= BIT5;
-                BCSCTL1 = CALBC1_1MHZ;		
-                DCOCTL = CALDCO_1MHZ;	
-                P1OUT |= BIT3;
-                P1REN |= BIT3;
-                P1DIR |= BIT4 + BIT0 + BIT6;
-                
-                  P1REN |= BIT3;                   // Enable internal pull-up/down resistors
-  P1OUT |= BIT3;                   //Select pull-up mode for P1.3
-  P1IE |= BIT3;                       // P1.3 interrupt enabled
-  P1IES |= BIT3;                     // P1.3 Hi/lo edge
-  P1IFG &= ~BIT3;                  // P1.3 IFG cleared
-  _BIS_SR(0);          // Enter LPM0 w/ interrupt LPM0_bits + GIE
-                
-		while(1)
-		{
-                        if (BIT3 & P1IN)
-                        {
-                            _BIS_SR(LPM0_bits + GIE);
 
-                        }else
-                        {
-                            _BIS_SR(0); 
-                        }
-			atraso(10);				
-			ADC10CTL0 |= ENC + ADC10SC;			
-			ValorRecebido = ADC10MEM;
-                         ValorAtraso = 190;
-                         atraso(ValorAtraso);
-                         P1OUT = BIT4;
-                         ValorAtraso = regrade3(ValorRecebido);
-                         atraso(ValorAtraso);
-                         P1OUT = 0;
-                        
-		}
- 
-	}
+void main(void)
+
+{
+   unsigned int ValorRecebido, Calibrador;
+   unsigned int ValorAtraso;
+   WDTCTL = WDTPW + WDTHOLD;  
+   ADC10CTL1 = INCH_5 + ADC10DIV_3 ;
+   ADC10CTL0 = SREF_0 + ADC10SHT_3 + ADC10ON + ADC10IE;
+   ADC10AE0 |= BIT5;
+   BCSCTL1 = CALBC1_1MHZ;
+   DCOCTL = CALDCO_1MHZ;
+   BCSCTL2 &= ~(DIVS_3);
+   P1DIR |= BIT6 + BIT0 + BIT4;
+   P1SEL |= BIT5;
+   P1REN |= BIT3;            
+   P1OUT |= BIT3;                  
+   P1IE |= BIT3;                     
+   P1IES |= BIT3;                   
+   P1IFG &= ~BIT3;  
+   __enable_interrupt();
+
+
+
+   while(1)
+
+   {
+      if (BIT3 & P1IN)
+      {
+         Calibrador = Calibrador - 100;
+      }else
+      {
+         Calibrador = Calibrador;
+      }
+      if (c == 423)
+      {
+         Calibrador = 1023;
+      }
+      ADC10CTL0 |= ENC + ADC10SC;
+      __bis_SR_register(CPUOFF + GIE);
+      ValorRecebido = ADC10MEM;
+      atraso(10);
+      ValorRecebido = ADC10MEM;
+      ValorAtraso = 190;
+      atraso(ValorAtraso);
+      P1OUT = BIT4;
+      ValorAtraso = regrade3cal(ValorRecebido, Calibrador);
+      atraso(ValorAtraso);
+       P1OUT = 0;
+
+
+}
 }
 
+#pragma vector=ADC10_VECTOR
 
+__interrupt void ADC10_ISR (void)
 
+{
+   __bic_SR_register_on_exit(CPUOFF);
+}
 
 #pragma vector=PORT1_VECTOR
 __interrupt void Port_1(void)
 {    
-   P1OUT ^= BIT6;                      // Toggle P1.6
-   P1IFG &= ~BIT3;                     // P1.3 IFG cleared 
+   P1OUT ^= BIT6;                     
+   P1IFG &= ~BIT3;                   
 }
