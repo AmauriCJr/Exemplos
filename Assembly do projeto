@@ -1,27 +1,3 @@
-atraso:
-	push.w R12
-	mov.w #0x63, &TA0CCR0
-	bis.w #0x4, &TA0CTL
-	mov.w #0x210, &TA0CTL
-	jmp 0xC136
-	add.w #0xFFFF, 0x0(SP)
-	bit.w #0x1, &TA0CTL
-	jnc 0xC12C
-	bic.w #0x1, &TA0CTL
-	tst.w 0x0(SP)
-	jne 0xC128
-	clr.w &TA0CTL
-
-regrade3cal:
-	mov.w R12,R15
-	rla.w R12
-	rla.w R12
-	rla.w R12
-	rla.w R12
-	add.w R15, R12
-	mov.w R13, R14
-
-
 main:
 	mov.w #0x5A80, &WDTCTL // Stop watch dog timer
 	mov.w #0x5060, &ADC10CTL1
@@ -38,6 +14,8 @@ main:
 	bis.b #0x8, &P1IES
 	bic.b #0x8, &P1IFG
 	eint                 //não tenho ideia do q essa porra faz em assembly, mas em C liga a interrupção
+	
+Laco1:	
 	mov.w #0xA, R12
 	call #atraso
 	bis.w #0x3, &ADC10CTL0
@@ -50,13 +28,98 @@ main:
 	call #regrade3cal      //chama a regra de 3 aki, mas ta incompleta em assembly
 	call #atraso
 	xor.b #0x10, &P1OUT
-	jmp 0xC074
+	jmp Laco1
+
+atraso:
+	push.w R12
+	mov.w #0x63, &TA0CCR0
+	bis.w #0x4, &TA0CTL
+	mov.w #0x210, &TA0CTL
+	jmp Verificador1
+Laco2:
+	add.w #0xFFFF, 0x0(SP)
+	bit.w #0x1, &TA0CTL
+	jnc 0xC12C
+	bic.w #0x1, &TA0CTL
+Verificador1:
+	tst.w 0x0(SP)
+	jne Laco2
+	clr.w &TA0CTL
+
+regrade3cal:
+	mov.w #17, R14
+	call #Multiplicacao
+	mov.w R4, R14              ;R4 é o valor do calibrador
+	mov.w R15, R8
+	call #Divisao
+	add.w #5, R10
+	jmp FIMMESMO
+
+
+
+	;R14 multiplicador
+	;R13 numero que ta sendo multiplicado
+	;R15 resultado
+Multiplicacao:
+	mov.w R13, R15
+	mov.w R14, R12
+	cmp #0, R14
+	jeq CondiZero
+	cmp #1, R14
+	jeq FIM
+Somas:
+	add.w R13, R15
+	cmp #2, R12
+	jeq FIM
+	dec.w R12
+	jmp Somas
+CondiZero:
+	mov.w #0, R15     ;Resultado em R15
+	jmp FIM
+FIM:
+	clr.w R12
+	ret
+
+Divisao:
+	cmp R14, R8
+	jl Condi1
+	cmp #1, R14
+	jeq Condicao1
+	mov.w R14, R11
+	sub.w R14, R8
+	add.w #1, R12          ; R8/R14
+Comparar:
+	dec.w R11
+	cmp R11, R8
+	jeq Resultado
+	cmp #0, R11
+	jeq Divisao
+	jmp Comparar
+Condicao1:
+	mov.w R8, R12
+	jmp Resultado
+Condi1:
+	mov.w #0, R12
+	jmp Resultado
+Resultado:
+	mov.w R12, R10  ;Resultado dado em R10
+	clr.w R14
+	clr.w R12
+	clr.w R11
+	clr.w R8
+	ret
+
+
+	FIMMESMO:
+	ret
+
+
 
 
 //Parte do interrupt
 
-Port_1:
-	push.w R15
+bic.b   #008h,&P1IFG            ; P1.3 IFG Cleared
+                push.w R15
 	push.w R14
 	bis.b #0x1, &P1OUT
 	clr.w R14
@@ -83,3 +146,13 @@ Port_1:
 	inc.w R14
 	adc.w R15
 	tst.w
+            reti                            ; Return from ISR
+                                            ;
+;------------------------------------------------------------------------------
+;           Interrupt Vectors
+;------------------------------------------------------------------------------
+            .sect   ".reset"                ; MSP430 RESET Vector
+            .short  RESET                   ;
+            .sect   ".int02"                ; P1.x Vector
+            .short  P1_ISR                  ;
+            .end
