@@ -1,0 +1,93 @@
+#include "msp430.h"                     ; #define controlled include file
+
+        NAME    main                    ; module name
+
+        PUBLIC  main                    ; make the main label vissible
+                                        ; outside this module
+        ORG     0FFFEh
+        DC16    init                    ; set reset vector to 'init' label
+
+        RSEG    CSTACK                  ; pre-declaration of segment
+        RSEG    CODE                    ; place program in 'CODE' segment
+
+init:   MOV     #SFE(CSTACK), SP        ; set up stack
+
+main:   NOP                             ; main program
+        MOV.W   #WDTPW+WDTHOLD,&WDTCTL  ; Stop watchdog timer
+
+mov.w #1, R4      ;x
+mov.w #2, R13     ;c
+
+
+
+Regrade3:
+mov.w #17, R14
+call #Multiplicacao
+mov.w R4, R14              ;R4 é o valor do calibrador
+mov.w R15, R8
+call #Divisao
+add.w #5, R10
+jmp FIMMESMO
+
+
+
+;R14 multiplicador
+;R13 numero que ta sendo multiplicado
+;R15 resultado
+Multiplicacao:
+mov.w R13, R15
+mov.w R14, R12
+cmp #0, R14
+jeq CondiZero
+cmp #1, R14
+jeq FIM
+Somas:
+add.w R13, R15
+cmp #2, R12
+jeq FIM
+dec.w R12
+jmp Somas
+CondiZero:
+mov.w #0, R15     ;Resultado em R15
+jmp FIM
+FIM:
+clr.w R12
+ret
+
+Divisao:
+cmp R14, R8
+jl Condi1
+cmp #1, R14
+jeq Condicao1
+mov.w R14, R11
+sub.w R14, R8
+add.w #1, R12          ; R8/R14
+Comparar:
+dec.w R11
+cmp R11, R8
+jeq Resultado
+cmp #0, R11
+jeq Divisao
+jmp Comparar
+Condicao1:
+mov.w R8, R12
+jmp Resultado
+Condi1:
+mov.w #0, R12
+jmp Resultado
+Resultado:
+mov.w R12, R10  ;Resultado dado em R10
+clr.w R14
+clr.w R12
+clr.w R11
+clr.w R8
+ret
+
+
+FIMMESMO:
+
+
+
+        JMP $                           ; jump to current location '$'
+                                        ; (endless loop)
+        END
