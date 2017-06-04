@@ -4,8 +4,8 @@ main:
 	mov.w #0x1810, &ADC10CTL0
 	bis.b #0x20, &ADC10AE0
 	bis.b #0x20, &P1SEL    //#0x20 é o BIT5
-	mov.w &CALBC1_1MHZ, &BCSCTL1
-	mov.w &CALDCO_1MHZ, & DCOCTL
+	mov.b &CALBC1_1MHZ, &BCSCTL1
+	mov.b &CALDCO_1MHZ, &DCOCTL
 	clr.b &P1OUT
 	bis.b #0x51, &P1DIR
 	bis.b #0x8, &P1REN    //#0x8 é o BIT3
