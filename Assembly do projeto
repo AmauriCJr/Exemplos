@@ -1,0 +1,85 @@
+atraso:
+	push.w R12
+	mov.w #0x63, &TA0CCR0
+	bis.w #0x4, &TA0CTL
+	mov.w #0x210, &TA0CTL
+	jmp 0xC136
+	add.w #0xFFFF, 0x0(SP)
+	bit.w #0x1, &TA0CTL
+	jnc 0xC12C
+	bic.w #0x1, &TA0CTL
+	tst.w 0x0(SP)
+	jne 0xC128
+	clr.w &TA0CTL
+
+regrade3cal:
+	mov.w R12,R15
+	rla.w R12
+	rla.w R12
+	rla.w R12
+	rla.w R12
+	add.w R15, R12
+	mov.w R13, R14
+
+
+main:
+	mov.w #0x5A80, &WDTCTL // Stop watch dog timer
+	mov.w #0x5060, &ADC10CTL1
+	mov.w #0x1810, &ADC10CTL0
+	bis.b #0x20, &ADC10AE0
+	bis.b #0x20, &P1SEL    //#0x20 é o BIT5
+	mov.w &CALBC1_1MHZ, &BCSCTL1
+	mov.w &CALDCO_1MHZ, & DCOCTL
+	clr.b &P1OUT
+	bis.b #0x51, &P1DIR
+	bis.b #0x8, &P1REN    //#0x8 é o BIT3
+	bis.b #0x8, &P1OUT
+	bis.b #0x8, &P1IE
+	bis.b #0x8, &P1IES
+	bic.b #0x8, &P1IFG
+	eint                 //não tenho ideia do q essa porra faz em assembly, mas em C liga a interrupção
+	mov.w #0xA, R12
+	call #atraso
+	bis.w #0x3, &ADC10CTL0
+	mov.w &ADC10MEM, R15
+	mov.w #0xBE, R12
+	call #atraso
+	bis.b #0x10, &P1OUT
+	mov.w &calibrador, R13
+	mov.w R15,R12
+	call #regrade3cal      //chama a regra de 3 aki, mas ta incompleta em assembly
+	call #atraso
+	xor.b #0x10, &P1OUT
+	jmp 0xC074
+
+
+//Parte do interrupt
+
+Port_1:
+	push.w R15
+	push.w R14
+	bis.b #0x1, &P1OUT
+	clr.w R14
+	clr.w R15
+	jmp 0xC0BC
+	inc.w R14
+	adc.w R15
+	tst.w R15
+	jl 0xC0B8
+	jne 0xC0C8
+	cmp.w #0x9C40, R14
+	jnc 0xC0B8
+	add.w #0xFF9C, &calibrador
+	inc.w &conta
+	xor.b #0x1, &P1OUT
+	cmp.w #0x6, &conta
+	jne 0xC10A
+	clr.w &conta
+	mov.w #0x3FF, &calibrador
+	bis.b #0x40, &P1OUT
+	clr.w R14
+	clr.w R15
+	jmp 0xC0F8
+	inc.w R14
+	adc.w R15
+	tst.w
