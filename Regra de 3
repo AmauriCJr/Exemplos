@@ -15,8 +15,8 @@ init:   MOV     #SFE(CSTACK), SP        ; set up stack
 main:   NOP                             ; main program
         MOV.W   #WDTPW+WDTHOLD,&WDTCTL  ; Stop watchdog timer
 
-mov.w #1, R4      ;x
-mov.w #2, R13     ;c
+mov.w #1023, R4      ;c
+mov.w #512, R13     ;x
 
 
 
