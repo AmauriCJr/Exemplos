@@ -1,0 +1,79 @@
+#include <msp430g2553.h>
+
+#define LED1 BIT0
+#define LED2 BIT6
+#define BTN  BIT3
+#define LED_DLY 10000
+
+int main (void)
+{
+	WDTCTL = WDTPW + WDTHOLD;
+	P1REN  = BTN;
+	P1OUT  = LED2 + BTN;
+	P1DIR  = LED1 + LED2;
+        asm("mov.w #1023, R4      ;c    \n"
+                "mov.w #512, R13     ;x  \n"
+                "Regrade3:    \n"
+                "mov.w #17, R14 \n"
+                "call #Multiplicacao \n"
+                "mov.w R4, R14              ;R4 é o valor do calibrador \n"
+                "mov.w R15, R8 \n"
+                "call #Divisao \n"
+                "add.w #5, R10 \n"
+                "jmp FIMMESMO \n"
+                ";R14 multiplicador \n"
+                ";R13 numero que ta sendo multiplicado \n"
+                ";R15 resultado \n"
+                "Multiplicacao: \n"
+                "mov.w R13, R15 \n"
+                "mov.w R14, R12 \n"
+                "cmp #0, R14 \n"
+                "jeq CondiZero \n"
+                "cmp #1, R14 \n"
+                "jeq FIM \n"
+                "Somas: \n"
+                "add.w R13, R15 \n"
+                "cmp #2, R12 \n"
+                "jeq FIM \n"
+                "dec.w R12 \n"
+                "jmp Somas \n"
+                "CondiZero: \n"
+                "mov.w #0, R15     ;Resultado em R15 \n"
+                "jmp FIM \n"
+                "FIM: \n"
+                "clr.w R12 \n"
+                "ret \n"
+                "Divisao: \n"
+                "cmp R14, R8 \n"
+                "jl Condi1 \n"
+                "cmp #1, R14 \n"
+                "jeq Condicao1 \n"
+                "mov.w R14, R11 \n"
+                "sub.w R14, R8 \n"
+                "add.w #1, R12          ; R8/R14 \n"
+                "Comparar: \n"
+                "dec.w R11 \n"
+                "cmp R11, R8 \n"
+                "jeq Resultado \n"
+                "cmp #0, R11 \n"
+                "jeq Divisao \n"
+                "jmp Comparar \n"
+                "Condicao1: \n"
+                "mov.w R8, R12 \n"
+                "jmp Resultado \n"
+                "Condi1: \n"
+                "mov.w #0, R12 \n"
+                "jmp Resultado \n"
+                "Resultado: \n"
+                "mov.w R12, R10  ;Resultado dado em R10 \n"
+                "clr.w R14 \n"
+                "clr.w R12 \n"
+                "clr.w R11 \n"
+                "clr.w R8 \n"
+                "ret \n"
+  
+
+                "FIMMESMO: \n");
+        
+        return 0;
+}
