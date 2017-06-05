@@ -23,9 +23,12 @@ Laco1:
 	mov.w #0xBE, R12
 	call #atraso
 	bis.b #0x10, &P1OUT
-	mov.w &calibrador, R13
-	mov.w R15,R12
+	;mov.w &calibrador, R13
+	mov.w &calibrador, R4           ; fiz mundaça aki
+	;mov.w R15,R12
+	mov.w R15,R13			; aki tb
 	call #regrade3cal      //chama a regra de 3 aki
+	mov.w R15, R12			; fiz outra mudança aki, colokei o R15(valor atraso) para o R12(tempo de delay)
 	call #atraso
 	xor.b #0x10, &P1OUT
 	jmp Laco1
@@ -38,8 +41,9 @@ atraso:
 	jmp Verificador1
 Laco2:
 	add.w #0xFFFF, 0x0(SP)
+Decrementador:
 	bit.w #0x1, &TA0CTL
-	jnc 0xC12C
+	jnc Decrementador
 	bic.w #0x1, &TA0CTL
 Verificador1:
 	tst.w 0x0(SP)
