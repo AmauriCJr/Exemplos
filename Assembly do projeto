@@ -25,7 +25,7 @@ Laco1:
 	bis.b #0x10, &P1OUT
 	mov.w &calibrador, R13
 	mov.w R15,R12
-	call #regrade3cal      //chama a regra de 3 aki, mas ta incompleta em assembly
+	call #regrade3cal      //chama a regra de 3 aki
 	call #atraso
 	xor.b #0x10, &P1OUT
 	jmp Laco1
